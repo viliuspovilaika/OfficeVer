@@ -7,7 +7,7 @@ import sys
 import os
 import shutil
 
-version="0.01.1"
+version="0.00.1"
 
 def GetOfficeVersion(versionIntString):
 	versionIntString = versionIntString[0:versionIntString.index(".") + 2]
