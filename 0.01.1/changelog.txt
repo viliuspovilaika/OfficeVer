@@ -1,0 +1,10 @@
+OfficeVer [0.01.1]
+
+Changelog for OfficeVer 0.01.1:
+
+[0.01.1]
+Unknown version handling added
+Version reading capabilities drastically improved
+
+[0.00.1]
+Initial release
