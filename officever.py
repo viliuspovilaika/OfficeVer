@@ -2,12 +2,13 @@
 
 # OfficeVer - Get Microsoft Office version of the document supplied
 # Coded by Vilius Povilaika, GitHub: https://github.com/viliuspovilaika
+# Download the newest version at https://github.com/viliuspovilaika/OfficeVer
 
 import sys
 import os
 import shutil
 
-version="0.00.1"
+version="0.01.1"
 
 def GetOfficeVersion(versionIntString):
 	versionIntString = versionIntString[0:versionIntString.index(".") + 2]
@@ -46,7 +47,7 @@ def GetOfficeVersion(versionIntString):
         elif versionIntString == "16.0":
                 return "Office 2016"
 	else:
-		return versionIntString
+		return "ERR" + versionIntString
 
 if "linux" in sys.platform:
 	normal_prefix = "\033[39m"
@@ -141,24 +142,44 @@ except Exception:
 	with open(documentPath, 'r') as myfile:
 		data=myfile.read().replace('\n', '')
 		if "Microsoft Word" in data:
-			msVersBuffer = data[data.index("Microsoft Word"):data.index("Microsoft Word") + 50]
-		elif "Microsoft Excel" in data:
-			msVersBuffer = data[data.index("Microsoft Excel"):data.index("Microsoft Excel") + 50]
-		elif "Microsoft PowerPoint" in data:
-			msVersBuffer = data[data.index("Microsoft PowerPoint"):data.index("Microsoft PowerPoint") + 80]
+			currentPos = 0
+			while True: 
+				data = data[currentPos + len("Microsoft Word"):]
+				currentPos = data.index("Microsoft Word")
+				if data[data.index("Microsoft Word"):data.index("Microsoft Word")+len("Microsoft Word 6.0 or later")] == "Microsoft Word 6.0 or later":
+					currentPos = data.index("Microsoft Word")
+                                elif data[data.index("Microsoft Word"):data.index("Microsoft Word")+len("Microsoft Word versions 6.0 or later")] == "Microsoft Word versions 6.0 or later":
+                                        currentPos = data.index("Microsoft Word")
+				else:
+					msVersBuffer = data[data.index("Microsoft Word"):data.index("Microsoft Word") + 50]
+					break
+		else:
+			print ""
+                        print errorCode + "Version info not found!"
+                        print ""
+                        sys.exit(0)
 	try: msVersBuffer = msVersBuffer[0:msVersBuffer.index("Document")]
 	except Exception:
 		try: msVersBuffer = msVersBuffer[0:msVersBuffer.index("or later") + len("or later")]
 		except Exception:
-			msVersBuffer = ""
-	if msVersBuffer == "":
+                    try: nothing = int(msVersBuffer[len("Microsoft Word "):len("Microsoft Word ") + 1])
+                    except Exception:
+                        msVersBuffer = ""
+                    msVersBuffer = msVersBuffer[len("Microsoft Word "):len("Microsoft Word ") + 3]
+        OfficeVersion = GetOfficeVersion(msVersBuffer)
+        if msVersBuffer == "":
         	print ""
-        	print errorCode + "Product info not found!"
+        	print errorCode + "Version info not found!"
         	print ""
-		sys.exit(0)
+                sys.exit(0)
+        elif OfficeVersion[:3] == "ERR":
+                print ""
+                print goodCode + "Version found, but is not in our database: " + OfficeVersion[3:]
+                print ""
+                sys.exit(0)
 	else:
         	print ""
-        	print goodCode + "Product: " + msVersBuffer
+                print goodCode + "Version found: " + OfficeVersion
         	print ""
 		sys.exit(0)
 
@@ -185,6 +206,10 @@ if msVersion == "":
 	print ""
 else:
 	print ""
-	print goodCode + "Version found: " + GetOfficeVersion(msVersion)
+        OfficeVersion = GetOfficeVersion(msVersion)
+        if OfficeVersion[:3] == "ERR":
+            print goodCode + "Version found, but is not in our database: " + OfficeVersion[3:]
+        else:
+	    print goodCode + "Version found: " + OfficeVersion
 	print ""
 shutil.rmtree("officevers_temp")
