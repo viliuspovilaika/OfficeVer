@@ -1,3 +1,5 @@
+![OfficeVer](https://i.imgur.com/lJR4cnW.png)
+
 # OfficeVer
 Identify Microsoft Office Version that last modified the Documents supplied
 
