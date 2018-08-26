@@ -8,7 +8,7 @@ import sys
 import os
 import shutil
 
-version="0.01.1"
+version="0.01.2"
 
 def GetOfficeVersion(versionIntString):
 	versionIntString = versionIntString[0:versionIntString.index(".") + 2]
@@ -192,6 +192,8 @@ else:
 zipObj.extractall("officevers_temp")
 zipObj.close()
 
+method = 0
+
 if verbose:
 	print okCode + "Reading the version info.."
 
@@ -199,12 +201,18 @@ with open('officevers_temp/docProps/app.xml', 'r') as myfile:
 	data=myfile.read().replace('\n', '')
 if "<AppVersion>" in data:
 	msVersion = data[data.index("<AppVersion>") + len("<AppVersion>"):data.index("</AppVersion>")]
+        method = 1
+elif "<Application>" in data:
+        if verbose:
+            print okCode + "Version info not found, trying to load the product name.."
+        msVersion = data[data.index("<Application>") + len("<Application>"):data.index("</Application")]
+        method = 2
 
 if msVersion == "":
 	print ""
 	print errorCode + "Version info not found!"
 	print ""
-else:
+elif method == 1:
 	print ""
         OfficeVersion = GetOfficeVersion(msVersion)
         if OfficeVersion[:3] == "ERR":
@@ -212,4 +220,8 @@ else:
         else:
 	    print goodCode + "Version found: " + OfficeVersion
 	print ""
+elif method == 2:
+        print ""
+        print goodCode + "Version info not found, but the name of the application was found instead: " + msVersion
+        print ""
 shutil.rmtree("officevers_temp")

@@ -1,6 +1,9 @@
-OfficeVer [0.01.1]
+OfficeVer [0.01.2]
 
-Changelog for OfficeVer 0.01.1:
+Changelog for OfficeVer 0.01.2:
+
+[0.01.2]
+Capability to scan non-MS Office documents added
 
 [0.01.1]
 Unknown version handling added
