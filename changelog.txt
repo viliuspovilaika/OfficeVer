@@ -1,6 +1,11 @@
-OfficeVer [0.01.2]
+OfficeVer [0.01.3]
 
-Changelog for OfficeVer 0.01.2:
+Changelog for OfficeVer 0.01.3:
+
+[0.01.3]
+Added Excel compatibility
+Improved stability
+Version output updated
 
 [0.01.2]
 Capability to scan non-MS Office documents added

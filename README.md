@@ -10,7 +10,7 @@ Available arguments:
         --version (-v)  Show officever version and exit
         --all (-a)      Show verbose output
 
-Example usage: officever.py -v AnnualReport.doc
+Example usage: officever.py -a AnnualReport.doc
 
 Coded by Vilius Povilaika, GitHub: https://github.com/viliuspovilaika
 ```

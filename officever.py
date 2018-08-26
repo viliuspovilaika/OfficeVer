@@ -8,44 +8,44 @@ import sys
 import os
 import shutil
 
-version="0.01.2"
+version="0.01.3"
 
 def GetOfficeVersion(versionIntString):
 	versionIntString = versionIntString[0:versionIntString.index(".") + 2]
 	if versionIntString == "1.0":
-		return "Office 1.0"
+		return "Microsoft Office 1.0"
         elif versionIntString == "1.5":
-                return "Office 1.5"
+                return "Microsoft Office 1.5"
         elif versionIntString == "1.6":
-                return "Office 1.6"
+                return "Microsoft Office 1.6"
         elif versionIntString == "3.0":
-                return "Office 3.0"
+                return "Microsoft Office 3.0"
         elif versionIntString == "4.0":
-                return "Office 4.0"
+                return "Microsoft Office 4.0"
         elif versionIntString == "4.3":
-                return "Office 4.3"
+                return "Microsoft Office 4.3"
         elif versionIntString == "4.2":
-                return "Office 4.2 for NT"
+                return "Microsoft Office 4.2 for NT"
         elif versionIntString == "7.0":
-                return "Office 95"
+                return "Microsoft Office 95"
         elif versionIntString == "8.0":
-                return "Office 97"
+                return "Microsoft Office 97"
         elif versionIntString == "8.5":
-                return "Office 97 Powered by Word 98"
+                return "Microsoft Office 97 Powered by Word 98"
         elif versionIntString == "9.0":
-                return "Office 2000"
+                return "Microsoft Office 2000"
         elif versionIntString == "10.0":
-                return "Office XP"
+                return "Microsoft Office XP"
         elif versionIntString == "11.0":
-                return "Office 2003"
+                return "Microsoft Office 2003"
         elif versionIntString == "12.0":
-                return "Office 2007"
+                return "Microsoft Office 2007"
         elif versionIntString == "14.0":
-                return "Office 2010"
+                return "Microsoft Office 2010"
         elif versionIntString == "15.0":
-                return "Office 2013"
+                return "Microsoft Office 2013"
         elif versionIntString == "16.0":
-                return "Office 2016"
+                return "Microsoft Office 2016"
 	else:
 		return "ERR" + versionIntString
 
@@ -74,7 +74,7 @@ def ArgumentError(invalidArg = ""):
 	print "\t--version (-v)\tShow officever version and exit"
 	print "\t--all (-a)\tShow verbose output"
 	print ""
-	print "Example usage: " + sys.argv[0] + " -v AnnualReport.doc"
+	print "Example usage: " + sys.argv[0] + " -a AnnualReport.doc"
 	print ""
 	print "Coded by Vilius Povilaika, GitHub: https://github.com/viliuspovilaika"
 	print ""
@@ -141,7 +141,9 @@ except Exception:
 		print okCode + "Can't extract the document, trying to read it.."
 	with open(documentPath, 'r') as myfile:
 		data=myfile.read().replace('\n', '')
+                doctype = 0 ## 1 = Word; 2 = Excel
 		if "Microsoft Word" in data:
+                        doctype = 1
 			currentPos = 0
 			while True: 
 				data = data[currentPos + len("Microsoft Word"):]
@@ -153,7 +155,23 @@ except Exception:
 				else:
 					msVersBuffer = data[data.index("Microsoft Word"):data.index("Microsoft Word") + 50]
 					break
-		else:
+                elif "Microsoft Excel" in data:
+                        doctype = 2
+                        data = data[data.index("Microsoft Excel"):]
+                        dataTempBuffer = data[data.index("Microsoft Excel ")+len("Microsoft Excel "):]
+                        counter = 0
+                        while True:
+                            if dataTempBuffer[counter].isalnum():
+                                counter += 1
+                            else:
+                                break
+                        msVersBuffer = dataTempBuffer[:counter]
+                        if msVersBuffer != "":
+                            print ""
+                            print goodCode + "Version info not was found, but the product was: " + "Microsoft Excel " + msVersBuffer
+                            print ""
+                            sys.exit(0)
+                else:
 			print ""
                         print errorCode + "Version info not found!"
                         print ""
@@ -166,7 +184,12 @@ except Exception:
                     except Exception:
                         msVersBuffer = ""
                     msVersBuffer = msVersBuffer[len("Microsoft Word "):len("Microsoft Word ") + 3]
-        OfficeVersion = GetOfficeVersion(msVersBuffer)
+        try: OfficeVersion = GetOfficeVersion(msVersBuffer)
+        except Exception:
+                print ""
+                print errorCode + "Version info not found!"
+                print ""
+                sys.exit(0)
         if msVersBuffer == "":
         	print ""
         	print errorCode + "Version info not found!"
