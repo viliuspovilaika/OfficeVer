@@ -1,6 +1,11 @@
-OfficeVer [0.01.3]
+OfficeVer [1.03.1]
 
-Changelog for OfficeVer 0.01.3:
+Changelog for OfficeVer 1.03.1:
+
+[1.03.1]
+PDF Files are now supported
+Improved stability
+More efficient method selection implemented
 
 [0.01.3]
 Added Excel compatibility

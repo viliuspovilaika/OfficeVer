@@ -8,7 +8,7 @@ import sys
 import os
 import shutil
 
-version="0.01.3"
+version="1.03.1"
 
 def GetOfficeVersion(versionIntString):
 	versionIntString = versionIntString[0:versionIntString.index(".") + 2]
@@ -125,22 +125,74 @@ except ImportError:
 
 # Main operation
 
-if verbose:
-	print okCode + "Extracting the document.."
-
 msVersion = ""
 if not os.path.isfile(documentPath):
 	print ""
 	print errorCode + "File not found!"
 	print ""
 	sys.exit(1)
-try:
-	zipObj = zipfile.ZipFile(documentPath, 'r')
-except Exception:
+fileType = 0 # 1 = DOC; 2 = DOCX; 3 = XLS; 4 = XLSX; 5 PDF
+
+def ExtractVersionFromArchive(documentPath):
 	if verbose:
+		print okCode + "Extracting the document.."
+	try:
+		zipObj = zipfile.ZipFile(documentPath, 'r')
+	except Exception:
 		print okCode + "Can't extract the document, trying to read it.."
-	with open(documentPath, 'r') as myfile:
-		data=myfile.read().replace('\n', '')
+		return "ERR1" # 1 = can't extract, 2 = version not found
+	try:
+		if not os.path.isdir("officevers_temp"):
+			os.makedirs("officevers_temp")
+		else:
+			shutil.rmtree("officevers_temp")
+			os.makedirs("officevers_temp")
+		zipObj.extractall("officevers_temp")
+		zipObj.close()
+		if verbose:
+			print okCode + "Reading the version info.."
+		with open('officevers_temp/docProps/app.xml', 'r') as myfile:
+			data=myfile.read().replace('\n', '')
+		if "<AppVersion>" in data:
+			msVersion = data[data.index("<AppVersion>") + len("<AppVersion>"):data.index("</AppVersion>")]
+			method = 1
+		elif "<Application>" in data:
+			if verbose:
+			    print okCode + "Version info not found, trying to load the product name.."
+			msVersion = data[data.index("<Application>") + len("<Application>"):data.index("</Application")]
+			method = 2
+
+		if msVersion == "":
+			print ""
+			print errorCode + "Version info not found!"
+			print ""
+		elif method == 1:
+			print ""
+			OfficeVersion = GetOfficeVersion(msVersion)
+			if OfficeVersion[:3] == "ERR":
+			    print goodCode + "Version found, but is not in our database: " + OfficeVersion[3:]
+			else:
+			    print goodCode + "Version found: " + OfficeVersion
+			print ""
+		elif method == 2:
+			print ""
+			print goodCode + "Version info not found, but the name of the application was found instead: " + msVersion
+			print ""
+		shutil.rmtree("officevers_temp")
+		sys.exit(0)
+	except Exception, e:
+			print ""
+			print errorCode + "An error occured while trying to read the version from the document's archive: "
+			print str(e)
+			print ""
+			sys.exit(0)
+
+def ExtractVersionFromDocument(documentPath):
+	if verbose:
+		print okCode + "Reading the document.."
+	try:
+		with open(documentPath, 'r') as myfile:
+			data=myfile.read().replace('\n', '')
                 doctype = 0 ## 1 = Word; 2 = Excel
 		if "Microsoft Word" in data:
                         doctype = 1
@@ -176,75 +228,97 @@ except Exception:
                         print errorCode + "Version info not found!"
                         print ""
                         sys.exit(0)
-	try: msVersBuffer = msVersBuffer[0:msVersBuffer.index("Document")]
-	except Exception:
-		try: msVersBuffer = msVersBuffer[0:msVersBuffer.index("or later") + len("or later")]
+		try: msVersBuffer = msVersBuffer[0:msVersBuffer.index("Document")]
 		except Exception:
-                    try: nothing = int(msVersBuffer[len("Microsoft Word "):len("Microsoft Word ") + 1])
-                    except Exception:
-                        msVersBuffer = ""
-                    msVersBuffer = msVersBuffer[len("Microsoft Word "):len("Microsoft Word ") + 3]
-        try: OfficeVersion = GetOfficeVersion(msVersBuffer)
-        except Exception:
-                print ""
-                print errorCode + "Version info not found!"
-                print ""
-                sys.exit(0)
-        if msVersBuffer == "":
-        	print ""
-        	print errorCode + "Version info not found!"
-        	print ""
-                sys.exit(0)
-        elif OfficeVersion[:3] == "ERR":
-                print ""
-                print goodCode + "Version found, but is not in our database: " + OfficeVersion[3:]
-                print ""
-                sys.exit(0)
-	else:
-        	print ""
-                print goodCode + "Version found: " + OfficeVersion
-        	print ""
-		sys.exit(0)
+			try: msVersBuffer = msVersBuffer[0:msVersBuffer.index("or later") + len("or later")]
+			except Exception:
+		            try: nothing = int(msVersBuffer[len("Microsoft Word "):len("Microsoft Word ") + 1])
+		            except Exception:
+		                msVersBuffer = ""
+		            msVersBuffer = msVersBuffer[len("Microsoft Word "):len("Microsoft Word ") + 3]
+		try: OfficeVersion = GetOfficeVersion(msVersBuffer)
+		except Exception:
+		        print ""
+		        print errorCode + "Version info not found!"
+		        print ""
+		        sys.exit(0)
+		if msVersBuffer == "":
+			print ""
+			print errorCode + "Version info not found!"
+			print ""
+		        sys.exit(0)
+		elif OfficeVersion[:3] == "ERR":
+		        print ""
+		        print goodCode + "Version found, but is not in our database: " + OfficeVersion[3:]
+		        print ""
+		        sys.exit(0)
+		else:
+			print ""
+		        print goodCode + "Version found: " + OfficeVersion
+			print ""
+			sys.exit(0)
+	except Exception, e:
+			print ""
+			print errorCode + "An error occured while trying to read the version from the document: "
+			print str(e)
+			print ""
+			sys.exit(0)
 
-if not os.path.isdir("officevers_temp"):
-	os.makedirs("officevers_temp")
+def ExtractVersionFromPdfDocument(documentPath):
+	try:
+		if verbose:
+			print okCode + "Reading the document.."
+		with open(documentPath, 'r') as myfile:
+			data=myfile.read().replace('\n', '')
+		if "<pdf:Producer>" in data:
+			data = data[data.index("<pdf:Producer>") + len("<pdf:Producer>"):]
+			pdfVersBuffer = data[:data.index("</pdf:Producer>")]
+			print ""
+			print goodCode + "Version found: " + pdfVersBuffer
+			print ""
+			sys.exit(0)
+		elif "/Creator" in data:
+			data = data[data.index("/Creator") + len("/Creator"):]
+			#data = data.replace(" ", "")
+			pdfVersBuffer = data[data.index("(") + 1:data.index(")")]
+			print ""
+			print goodCode + "Version found: " + pdfVersBuffer
+			print ""
+			sys.exit(0)
+		else:
+			print ""
+			print errorCode + "Could not read the version data of the PDF file given"
+			print "NOTE! You can always help us improve OffieVer by submitting undetected documents on our GitHub"
+			print
+			sys.exit(0)
+	except Exception, e:
+			print ""
+			print errorCode + "An error occured while trying to read the version from the PDF document: "
+			print str(e)
+			print ""
+			sys.exit(0)
+
+filetype = 0
+if documentPath[documentPath.index(".") + 1:] == "doc":
+    filetype = 1
+elif documentPath[documentPath.index(".") + 1:] == "docx":
+    filetype = 2
+elif documentPath[documentPath.index(".") + 1:] == "xls":
+    filetype = 3
+elif documentPath[documentPath.index(".") + 1:] == "xlsx":
+    filetype = 4
+elif documentPath[documentPath.index(".") + 1:] == "pdf":
+    filetype  = 5
 else:
-	shutil.rmtree("officevers_temp")
-	os.makedirs("officevers_temp")
+    print ""
+    print errorCode + "Filetype not found!"
+    print ""
+    sys.exit(0)
 
-zipObj.extractall("officevers_temp")
-zipObj.close()
-
-method = 0
-
-if verbose:
-	print okCode + "Reading the version info.."
-
-with open('officevers_temp/docProps/app.xml', 'r') as myfile:
-	data=myfile.read().replace('\n', '')
-if "<AppVersion>" in data:
-	msVersion = data[data.index("<AppVersion>") + len("<AppVersion>"):data.index("</AppVersion>")]
-        method = 1
-elif "<Application>" in data:
-        if verbose:
-            print okCode + "Version info not found, trying to load the product name.."
-        msVersion = data[data.index("<Application>") + len("<Application>"):data.index("</Application")]
-        method = 2
-
-if msVersion == "":
-	print ""
-	print errorCode + "Version info not found!"
-	print ""
-elif method == 1:
-	print ""
-        OfficeVersion = GetOfficeVersion(msVersion)
-        if OfficeVersion[:3] == "ERR":
-            print goodCode + "Version found, but is not in our database: " + OfficeVersion[3:]
-        else:
-	    print goodCode + "Version found: " + OfficeVersion
-	print ""
-elif method == 2:
-        print ""
-        print goodCode + "Version info not found, but the name of the application was found instead: " + msVersion
-        print ""
-shutil.rmtree("officevers_temp")
+if filetype == 2 or filetype == 4:
+	if ExtractVersionFromArchive(documentPath) == "ERR1":
+		ExtractVersionFromDocument(documentPath)
+elif filetype == 1 or filetype == 3:
+	ExtractVersionFromDocument(documentPath)
+else:
+	ExtractVersionFromPdfDocument(documentPath)
